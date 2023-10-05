@@ -1,5 +1,6 @@
 using Xunit;
 using FluentAssertions;
+using Calculator_Tests;
 
 namespace Calculator_Tests
 {
@@ -59,9 +60,27 @@ namespace Calculator_Tests
         }
 
         [Theory]
+        [InlineData("+", "0")]
+        [InlineData("2+", "2")]
+        [InlineData("2*", "0")]
+        [InlineData("2/", "")]
         [InlineData("2+(0.5)", "2,5")]
         [InlineData("2*2.6", "5,2")]
-        public void Parser_ShouldReturnDoubleNumber_IfUserWritingDot(string left, string right)
+        [InlineData("123.123+1.1", "124,223")]
+        [InlineData("2.2+1.1", "3,3")]
+
+        public void Parser_ShouldReturnDoubleNumber_IfSourceWritingDot(string left, string right)
+        {
+            var result = _parser.StartParsing(left);
+            result.Should().Be(right);
+
+        }
+
+        [Theory]
+        [InlineData("()", "Error")]
+        [InlineData("2+()", "Error")]
+        [InlineData("2*()", "Error")]
+        public void Parser_ShouldReturn_If(string left, string right)
         {
             var result = _parser.StartParsing(left);
             result.Should().Be(right);
@@ -76,19 +95,31 @@ namespace Calculator_Tests
         }
 
 
+
+        [Fact]
+        public void Parser_ShouldReturnMaxValue_IfSourceContainsSumMaxValue()
+        {
+            var m1 = int.MaxValue;
+            var m2 = int.MaxValue;
+            var result = _parser.StartParsing($"{m1} + {m2}");
+            result.Should().Be(m1.ToString());
+        }
     }
 }
 
 class Calculator
 {
+    private Parser _parser;
     public string Calculation(string input)
     {
+        _parser = new Parser();
         var result = input;
         if (string.IsNullOrWhiteSpace(result))
         {
             result = "0";
         }
 
+        result = _parser.StartParsing(Handler(result));
 
 
         return result;
