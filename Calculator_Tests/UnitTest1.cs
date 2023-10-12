@@ -1,6 +1,9 @@
-using Xunit;
+锘縰sing Xunit;
 using FluentAssertions;
-using Calculator_Tests;
+using System.ComponentModel;
+using FluentAssertions.Equivalency;
+using EquationProcessing;
+using Calculator_Parser;
 
 namespace Calculator_Tests
 {
@@ -26,26 +29,77 @@ namespace Calculator_Tests
 
         // Handler
         [Fact]
-        public void Handler_ShouldReturnNotSpace_IfSource裲ntainsSpaces()
+        public void Handler_ShouldReturnNotSpace_IfSource小ontainsSpaces()
         {
             var result = _calculator.Handler("   123 , 123 + ( 123 )  ");
             result.Should().Be("123,123+(123)");
         }
 
         [Fact]
-        public void Handler_ShouldReturnNotDots_IfSource裲ntainsDots()
+        public void Handler_ShouldReturnNotDots_IfSource小ontainsDots()
         {
             var result = _calculator.Handler("123.123");
             result.Should().Be("123,123");
         }
 
         [Fact]
-        public void Handler_ShouldReturnOneDotInNumber_IfSource裲ntainsMultipleDotsInNumber()
+        public void Handler_ShouldReturnOneDotInNumber_IfSource小ontainsMultipleDotsInNumber()
         {
             var result = _calculator.Handler("123.123.456 + 123");
             result.Should().Be("123,123456+123");
         }
 
+        [Fact]
+        public void Handler_ShouldReturnNotLetters_IfSource小ontainsLetters()
+        {
+            var result = _calculator.Handler("123.1asd23 asd+ 123asd");
+            result.Should().Be("123,123+123");
+        }
+
+
+
+        // Parser
+        [Fact]
+        public void Parser_ShouldReturnZero_IfSourceContainsEmptyString()
+        {
+            var result = _parser.StartParsing("");
+            result.Should().Be("0");
+        }
+
+        [Fact]
+        public void Parser_ShouldReturnCurrentNumber_IfSourceContainsOneNumber()
+        {
+            var result = _parser.StartParsing("1");
+            result.Should().Be("1");
+        }
+
+        [Theory]
+        [InlineData("2+", "4")]
+        [InlineData("2-", "0")]
+        [InlineData("2*", "4")]
+        [InlineData("2/", "1")]
+        [InlineData("+", "0")]
+        [InlineData("*", "0")]
+        [InlineData(" -  *", "0")]
+        [InlineData("/", "Infinity")]
+
+        public void Parser_ShouldReturnDivisionOnItself_IfTheSourceCodeContainsAnUnfinishedOperation(string input, string expected)
+        {
+            var result = _parser.StartParsing(input);
+            result.Should().Be(expected);
+        }
+
+        [Theory]
+        [InlineData("1/0", "Infinity")]
+        [InlineData("0/0", "Infinity")]
+        [InlineData("0/(10-10)", "Infinity")]
+        [InlineData("10/(10*0)", "Infinity")]
+
+        public void Parser_ShouldReturnInfinityString_IfSourceContainsDivisionByZero(string input, string expected)
+        {
+            var result = _parser.StartParsing(input);
+            result.Should().Be(expected);
+        }
 
         [Theory]
         [InlineData("5+5", "10")]
@@ -59,15 +113,15 @@ namespace Calculator_Tests
             result.Should().Be(expected);
         }
 
+
         [Theory]
-        [InlineData("+", "0")]
-        [InlineData("2+", "2")]
-        [InlineData("2*", "0")]
-        [InlineData("2/", "")]
         [InlineData("2+(0.5)", "2,5")]
         [InlineData("2*2.6", "5,2")]
         [InlineData("123.123+1.1", "124,223")]
         [InlineData("2.2+1.1", "3,3")]
+        [InlineData("-0.5+-1*2/0.22*100+1", "-908,59090909")]
+        [InlineData("0.5+0.5", "1")]
+        [InlineData("0.+0.5", "0,5")]
 
         public void Parser_ShouldReturnDoubleNumber_IfSourceWritingDot(string left, string right)
         {
@@ -79,22 +133,14 @@ namespace Calculator_Tests
         [Theory]
         [InlineData("()", "Error")]
         [InlineData("2+()", "Error")]
+        [InlineData("袨+1.0", "Error")]
         [InlineData("2*()", "Error")]
-        public void Parser_ShouldReturn_If(string left, string right)
+        public void Parser_ShouldReturnError_If(string left, string right)
         {
             var result = _parser.StartParsing(left);
             result.Should().Be(right);
 
         }
-
-        [Fact]
-        public void Parser_ShouldReturnZero_IfSourceContainsEmptyString()
-        {
-            _parser.Invoking(x => x.StartParsing("")).
-            Should().Throw<System.ArgumentNullException>();
-        }
-
-
 
         [Fact]
         public void Parser_ShouldReturnMaxValue_IfSourceContainsSumMaxValue()
@@ -104,60 +150,5 @@ namespace Calculator_Tests
             var result = _parser.StartParsing($"{m1} + {m2}");
             result.Should().Be(m1.ToString());
         }
-    }
-}
-
-class Calculator
-{
-    private Parser _parser;
-    public string Calculation(string input)
-    {
-        _parser = new Parser();
-        var result = input;
-        if (string.IsNullOrWhiteSpace(result))
-        {
-            result = "0";
-        }
-
-        result = _parser.StartParsing(Handler(result));
-
-
-        return result;
-        throw new NotImplementedException();
-    }
-
-    public string Handler(string input)
-    {
-        var handlerInput = input;
-        var result = "";
-        var isDot = false;
-        List<char> allowed裩aracters = new List<char> { '-', '+', '*', '/', '(', ')' };
-        foreach (var symbol in handlerInput)
-        {
-            if (symbol == '.' || symbol == ',')
-            {
-                if (!isDot)
-                {
-                    isDot = true;
-                    result += ',';
-                }
-            }
-            else if (char.IsDigit(symbol))
-            {
-                result += symbol;
-            }
-            else if (allowed裩aracters.Contains(symbol))
-            {
-                isDot = false;
-                result += symbol;
-            }
-            else
-            {
-                isDot = false;
-            }
-        }
-        
-        return result;
-        throw new NotImplementedException();
     }
 }

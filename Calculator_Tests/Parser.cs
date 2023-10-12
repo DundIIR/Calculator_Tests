@@ -1,8 +1,8 @@
-﻿namespace Calculator_Tests
+﻿namespace Calculator_Parser
 {
     public class Parser
     {
-        private string? InputString;
+        private string InputString;
         private bool isInvalid = false;
         private int symbol, index = 0;
         private void GetSymbol()
@@ -18,14 +18,18 @@
 
         public string StartParsing(string SourceString)
         {
-            InputString = SourceString;
-            if (string.IsNullOrWhiteSpace(InputString))
-                throw new ArgumentNullException("String is null or contains whitespace");
+            InputString = SourceString ?? "0";
+            /*if (string.IsNullOrWhiteSpace(InputString))
+                throw new ArgumentNullException("String is null or contains whitespace");*/
+            if(InputString == "0")
+                return InputString;
             index = 0;
             GetSymbol();
-            string result = MethodE().ToString();
+            string result = MethodE().ToString("F8").TrimEnd('0').TrimEnd(',');
             if (isInvalid)
                 return "Error";
+            else if (result == double.NaN.ToString())
+                return "Infinity";
             else
                 return result;
         }
@@ -36,7 +40,14 @@
             {
                 char p = (char)symbol;
                 GetSymbol();
-                if (p == '+')
+                if (symbol == '\0')
+                {
+                    if (p == '+')
+                        x += x;
+                    else
+                        x -= x;
+                }
+                else if (p == '+')
                     x += MethodT();
                 else
                     x -= MethodT();
@@ -45,15 +56,26 @@
         }
         private double MethodT()
         {
+            double tempx;
             double x = MethodM();
             while (symbol == '*' || symbol == '/')
             {
                 char p = (char)symbol;
                 GetSymbol();
-                if (p == '*')
+                if(symbol == '\0')
+                {
+                    if (p == '*')
+                        x *= x;
+                    else
+                        x = (x == 0) ? double.NaN : (x / x);
+                }
+                else if (p == '*')
                     x *= MethodM();
                 else
-                    x /= MethodM();
+                {
+                    tempx = MethodM();
+                    x = (tempx == 0) ? double.NaN : (x / tempx);
+                }
             }
             return x;
         }
@@ -85,10 +107,11 @@
                 }
                 else if (symbol >= '0' && symbol <= '9')
                     x = MethodC();
-                else if (symbol >= 'a' && symbol <= 'z')
+                else if (char.IsLetter((char)symbol))
                 {
-                    throw new ArgumentException($"Invalid parameter. Current string:{InputString} ");
-
+                    /*throw new ArgumentException($"Invalid parameter. Current string:{InputString} ");*/
+                    isInvalid = true;
+                    return 0;
                 }
                 else if (symbol == '(' || symbol == ')')
                 {
@@ -133,6 +156,7 @@
                 }
 
             }
+            if (x.LastOrDefault() == ',') x += '0';
             return double.Parse(x);
         }
     }
