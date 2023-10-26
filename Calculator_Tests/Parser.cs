@@ -16,7 +16,7 @@
                 symbol = '\0';
         }
 
-        public string StartParsing(string SourceString)
+        public string StartParsing(string? SourceString)
         {
             InputString = SourceString ?? "0";
             /*if (string.IsNullOrWhiteSpace(InputString))
@@ -158,6 +158,11 @@
             }
             if (x.LastOrDefault() == ',') x += '0';
             return double.Parse(x);
+        }
+
+        public string? StartParsing()
+        {
+            throw new NotImplementedException();
         }
     }
 }

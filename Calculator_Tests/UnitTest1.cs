@@ -22,7 +22,7 @@ namespace Calculator_Tests
         [Fact]
         public void Calculation_ShouldReturnNumberZero_IfSourceEmpty()
         {
-            var result = _calculator.Calculation(string.Empty);
+            var result = Calculator.Calculation(string.Empty);
             result.Should().Be("0");
         }
 
@@ -31,28 +31,28 @@ namespace Calculator_Tests
         [Fact]
         public void Handler_ShouldReturnNotSpace_IfSourceСontainsSpaces()
         {
-            var result = _calculator.Handler("   123 , 123 + ( 123 )  ");
+            var result = Calculator.Handler("   123 , 123 + ( 123 )  ");
             result.Should().Be("123,123+(123)");
         }
 
         [Fact]
         public void Handler_ShouldReturnNotDots_IfSourceСontainsDots()
         {
-            var result = _calculator.Handler("123.123");
+            var result = Calculator.Handler("123.123");
             result.Should().Be("123,123");
         }
 
         [Fact]
         public void Handler_ShouldReturnOneDotInNumber_IfSourceСontainsMultipleDotsInNumber()
         {
-            var result = _calculator.Handler("123.123.456 + 123");
+            var result = Calculator.Handler("123.123.456 + 123");
             result.Should().Be("123,123456+123");
         }
 
         [Fact]
         public void Handler_ShouldReturnNotLetters_IfSourceСontainsLetters()
         {
-            var result = _calculator.Handler("123.1asd23 asd+ 123asd");
+            var result = Calculator.Handler("123.1asd23 asd+ 123asd");
             result.Should().Be("123,123+123");
         }
 
